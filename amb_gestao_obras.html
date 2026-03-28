@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMB & INOWATT — Gestão de Obras</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#1a1a1a;background:#f5f5f3;min-height:100vh}
+a{color:inherit;text-decoration:none}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:16px;padding:0 20px;height:52px;background:#fff;border-bottom:1px solid #e5e5e2;position:sticky;top:0;z-index:100}
+.logo{font-size:15px;font-weight:600;color:#1a1a1a;letter-spacing:-.3px}
+.logo span{color:#185FA5}
+.topbar-nav{display:flex;gap:2px;margin-left:auto}
+.topbar-btn{font-size:13px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer;color:#666;background:transparent;transition:all .15s;font-weight:500}
+.topbar-btn:hover{background:#f0f0ee;color:#1a1a1a}
+.topbar-btn.active{background:#e8f0fb;color:#185FA5}
+
+/* LAYOUT */
+.page{display:none;min-height:calc(100vh - 52px)}
+.page.active{display:block}
+.container{max-width:1400px;margin:0 auto;padding:20px}
+
+/* CARDS */
+.card{background:#fff;border:1px solid #e5e5e2;border-radius:12px;padding:16px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0ee}
+
+/* BADGES */
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.bg{background:#EAF3DE;color:#3B6D11}
+.ba{background:#FAEEDA;color:#854F0B}
+.bb{background:#E6F1FB;color:#185FA5}
+.bgr{background:#F1EFE8;color:#5F5E5A}
+.br{background:#FCEBEB;color:#A32D2D}
+.bpu{background:#EEEDFE;color:#534AB7}
+
+/* BUTTONS */
+.btn{font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid #d5d5d2;cursor:pointer;background:#f5f5f3;color:#1a1a1a;transition:all .15s;font-weight:500}
+.btn:hover{background:#eaeae8;border-color:#bbb}
+.btn-p{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-p:hover{background:#0C447C;border-color:#0C447C}
+.btn-sm{font-size:11px;padding:4px 9px}
+.btn-danger{color:#A32D2D;border-color:#f0b0b0}
+.btn-danger:hover{background:#FCEBEB}
+
+/* FORMS */
+.fi{width:100%;font-size:12px;padding:6px 9px;border:1px solid #d5d5d2;border-radius:7px;background:#fff;color:#1a1a1a;transition:border .15s}
+.fi:focus{outline:none;border-color:#185FA5}
+.flabel{font-size:11px;color:#888;display:block;margin-bottom:3px;font-weight:500}
+.fgroup{margin-bottom:10px}
+.frow{display:grid;gap:10px;margin-bottom:10px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-size:11px;font-weight:600;color:#888;padding:7px 10px;border-bottom:1px solid #eee;text-align:left;text-transform:uppercase;letter-spacing:.3px;background:#fafaf8;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #f0f0ee;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.metric{background:#fff;border:1px solid #e5e5e2;border-radius:10px;padding:14px 16px}
+.metric-label{font-size:11px;color:#888;margin-bottom:4px;font-weight:500}
+.metric-value{font-size:22px;font-weight:600;color:#1a1a1a}
+.metric-sub{font-size:11px;color:#aaa;margin-top:2px}
+
+/* PROGRESS */
+.pct-bar{height:6px;background:#eee;border-radius:3px;overflow:hidden}
+.pct-fill{height:100%;border-radius:3px;transition:width .4s}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-size:15px;font-weight:600}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end;background:#fafaf8;border-radius:0 0 14px 14px}
+
+/* DRAWER (obra detail) */
+.drawer{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.35)}
+.drawer.open{display:block}
+.drawer-panel{position:absolute;top:0;right:0;bottom:0;width:min(900px,100%);background:#f5f5f3;overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.15)}
+.drawer-topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#fff;border-bottom:1px solid #e5e5e2;position:sticky;top:0;z-index:10}
+.drawer-tabs{display:flex;gap:2px;overflow-x:auto;padding:0 20px;background:#fff;border-bottom:1px solid #e5e5e2}
+.dtab{font-size:12px;padding:9px 12px;border:none;background:none;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:500;transition:all .15s}
+.dtab:hover{color:#1a1a1a}
+.dtab.active{color:#185FA5;border-bottom-color:#185FA5}
+.drawer-content{padding:16px 20px}
+.dsection{display:none}
+.dsection.active{display:block}
+
+/* CRONO */
+.macro-block{border:1px solid #e5e5e2;border-radius:10px;margin-bottom:8px;overflow:hidden;background:#fff}
+.macro-header{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#fafaf8;cursor:pointer;user-select:none}
+.macro-num{font-size:12px;font-weight:600;color:#aaa;min-width:20px}
+.macro-name{font-size:13px;font-weight:600;flex:1;color:#1a1a1a}
+.macro-body{display:none;border-top:1px solid #f0f0ee}
+.macro-body.open{display:block}
+.toggle{font-size:10px;color:#bbb;transition:transform .2s}
+.toggle.open{transform:rotate(90deg)}
+.etapa-row{border-bottom:1px solid #f0f0ee}
+.etapa-row:last-child{border-bottom:none}
+.etapa-inner{padding:12px 14px}
+
+/* CALENDAR */
+.cal-wrap{overflow-x:auto;border:1px solid #e5e5e2;border-radius:10px;background:#fff}
+.cal-table{border-collapse:collapse;font-size:11px;width:100%}
+.cal-table th{padding:6px 5px;border:1px solid #eee;background:#fafaf8;font-weight:600;text-align:center;font-size:10px;color:#888;white-space:nowrap}
+.cal-table td{padding:3px;border:1px solid #f0f0ee;vertical-align:top;min-width:34px;max-width:34px}
+.cal-table .name-col{min-width:140px;max-width:140px;font-size:12px;font-weight:600;padding:6px 10px;background:#fafaf8;position:sticky;left:0;z-index:1}
+.alloc-pill{display:block;border-radius:3px;padding:2px 3px;font-size:9px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;margin-bottom:1px}
+.weekend-col{background:#f8f8f6}
+.today-col{background:#e8f0fb}
+
+/* MISC */
+.alert-bar{background:#FCEBEB;border-left:3px solid #E24B4A;border-radius:0 8px 8px 0;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:12px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.obras-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.obra-card{background:#fff;border:1px solid #e5e5e2;border-radius:12px;padding:16px;cursor:pointer;transition:all .2s}
+.obra-card:hover{border-color:#185FA5;box-shadow:0 4px 16px rgba(24,95,165,.1)}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:5px;font-weight:600;margin-right:4px;margin-bottom:4px}
+.nota-btn{width:30px;height:30px;border-radius:7px;border:1px solid #d5d5d2;background:#f5f5f3;font-size:12px;font-weight:600;cursor:pointer;color:#888;transition:all .15s}
+.nota-btn.sel{background:#185FA5;color:#fff;border-color:#185FA5}
+.check-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f3}
+.check-row:last-child{border-bottom:none}
+.colab-check-label{display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;border:1px solid #d5d5d2;border-radius:7px;cursor:pointer;background:#fff;transition:all .15s;user-select:none}
+.colab-check-label:hover{background:#f0f0ee}
+.colab-check-label input:checked~span{color:#185FA5;font-weight:600}
+
+@media(max-width:700px){
+  .metrics{grid-template-columns:1fr 1fr}
+  .g4{grid-template-columns:1fr 1fr}
+  .obras-grid{grid-template-columns:1fr}
+  .drawer-panel{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><span>AMB</span> & INOWATT</div>
+  <div class="topbar-nav">
+    <button class="topbar-btn active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="topbar-btn" onclick="showPage('cronofuturo')">Cronograma</button>
+    <button class="topbar-btn" onclick="showPage('config')">Configurações</button>
+  </div>
+</div>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div id="page-dashboard" class="page active">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div style="font-size:20px;font-weight:700">Painel de obras</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">AMB & INOWATT — visão consolidada</div>
+      </div>
+      <button class="btn btn-p" onclick="openNovaObra()">+ Nova obra</button>
+    </div>
+    <div class="metrics" id="dash-metrics"></div>
+    <div class="obras-grid" id="obras-grid"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ CRONOGRAMA FUTURO ═══════════════ -->
+<div id="page-cronofuturo" class="page">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:20px;font-weight:700">Cronograma futuro de obras</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">Alocação de colaboradores por obra e dia</div>
+      </div>
+      <button class="btn btn-p" onclick="openModalAloc()">+ Nova alocação</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <select class="fi" id="cf-fil-obra" style="width:auto" onchange="renderCrono()">
+        <option value="">Todas as obras</option>
+      </select>
+      <select class="fi" id="cf-fil-colab" style="width:auto" onchange="renderCrono()">
+        <option value="">Todos os colaboradores</option>
+      </select>
+      <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
+        <button class="btn" onclick="navMes(-1)">←</button>
+        <span id="cf-mes-label" style="font-size:13px;font-weight:600;min-width:130px;text-align:center"></span>
+        <button class="btn" onclick="navMes(1)">→</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px" id="cf-legenda"></div>
+    <div class="cal-wrap">
+      <table class="cal-table" id="cf-cal"></table>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:#aaa">Fins de semana sombreados. Clique em uma pílula para remover a alocação.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ CONFIGURAÇÕES ═══════════════ -->
+<div id="page-config" class="page">
+  <div class="container">
+    <div style="font-size:20px;font-weight:700;margin-bottom:16px">Configurações</div>
+    <div class="g2" style="display:grid;gap:12px">
+      <div class="card">
+        <div class="card-title">Colaboradores internos</div>
+        <div id="cfg-colabs-list" style="margin-bottom:10px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" class="fi" id="cfg-colab-input" placeholder="Nome do colaborador">
+          <button class="btn btn-p btn-sm" onclick="addColab()">Adicionar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Áreas / setores</div>
+        <div id="cfg-areas-list" style="margin-bottom:10px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" class="fi" id="cfg-area-input" placeholder="Nome da área">
+          <button class="btn btn-p btn-sm" onclick="addArea()">Adicionar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Clientes cadastrados</div>
+        <div id="cfg-clientes-list" style="margin-bottom:10px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" class="fi" id="cfg-cliente-input" placeholder="Nome do cliente">
+          <button class="btn btn-p btn-sm" onclick="addCliente()">Adicionar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tipos de projeto</div>
+        <div id="cfg-tipos-list" style="margin-bottom:10px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" class="fi" id="cfg-tipo-input" placeholder="Ex: CFTV, Elétrico BT, Solar...">
+          <button class="btn btn-p btn-sm" onclick="addTipo()">Adicionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DRAWER OBRA ═══════════════ -->
+<div class="drawer" id="obra-drawer" onclick="closeDrawer(event)">
+  <div class="drawer-panel" onclick="event.stopPropagation()">
+    <div class="drawer-topbar">
+      <button class="btn btn-sm" onclick="closeDrawerDirect()">← Voltar</button>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700" id="drawer-title">—</div>
+        <div style="font-size:12px;color:#888;margin-top:1px" id="drawer-sub">—</div>
+      </div>
+      <span id="drawer-badge"></span>
+    </div>
+    <div class="drawer-tabs">
+      <button class="dtab active" onclick="showDsection('identificacao',this)">Identificação</button>
+      <button class="dtab" onclick="showDsection('cronograma',this)">Cronograma</button>
+      <button class="dtab" onclick="showDsection('horas',this)">Horas</button>
+      <button class="dtab" onclick="showDsection('financeiro',this)">Financeiro</button>
+      <button class="dtab" onclick="showDsection('faturamento',this)">Faturamento</button>
+      <button class="dtab" onclick="showDsection('aditivos',this)">Aditivos</button>
+      <button class="dtab" onclick="showDsection('pendencias',this)">Pendências</button>
+      <button class="dtab" onclick="showDsection('acoes',this)">Ações 15d</button>
+      <button class="dtab" onclick="showDsection('fiscalizacao',this)">Fiscalização</button>
+      <button class="dtab" onclick="showDsection('reunioes',this)">Reuniões</button>
+    </div>
+    <div class="drawer-content" id="drawer-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- Nova Obra -->
+<div class="modal-overlay" id="modal-nova-obra">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Nova obra</span><button class="btn btn-sm" onclick="closeModal('modal-nova-obra')">Fechar</button></div>
+    <div class="modal-body">
+      <div class="frow g2">
+        <div><span class="flabel">Nome da obra</span><input type="text" class="fi" id="no-nome" placeholder="Ex: CFTV Subestação Caçador"></div>
+        <div><span class="flabel">Nº do orçamento</span><input type="text" class="fi" id="no-orcamento" placeholder="AMB-2025-0001"></div>
+      </div>
+      <div class="frow g2">
+        <div><span class="flabel">Cliente</span><select class="fi" id="no-cliente"></select></div>
+        <div><span class="flabel">Tipo de projeto</span><select class="fi" id="no-tipo"></select></div>
+      </div>
+      <div class="frow g2">
+        <div><span class="flabel">Responsável AMB</span><select class="fi" id="no-resp-amb"></select></div>
+        <div><span class="flabel">Fiscal da obra</span><select class="fi" id="no-fiscal"></select></div>
+      </div>
+      <div><span class="flabel">Responsável cliente (nome e tel)</span><input type="text" class="fi" id="no-resp-cliente" placeholder="Nome · (xx) xxxxx-xxxx"></div>
+      <div class="frow g2" style="margin-top:10px">
+        <div><span class="flabel">Data de início</span><input type="date" class="fi" id="no-inicio"></div>
+        <div><span class="flabel">Data de finalização prevista</span><input type="date" class="fi" id="no-fim"></div>
+      </div>
+      <div style="margin-top:6px"><span class="flabel">Endereço da obra</span><input type="text" class="fi" id="no-endereco" placeholder="Rua, cidade, estado"></div>
+      <div class="frow g2" style="margin-top:10px">
+        <div><span class="flabel">Valor total do contrato (R$)</span><input type="number" class="fi" id="no-valor" placeholder="0"></div>
+        <div><span class="flabel">Status inicial</span><select class="fi" id="no-status"><option>Em andamento</option><option>Não iniciada</option><option>Atenção</option><option>Atrasada</option><option>Encerrando</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-nova-obra')">Cancelar</button>
+      <button class="btn btn-p" onclick="salvarNovaObra()">Criar obra</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nova Alocação -->
+<div class="modal-overlay" id="modal-aloc">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Nova alocação de equipe</span><button class="btn btn-sm" onclick="closeModal('modal-aloc')">Fechar</button></div>
+    <div class="modal-body">
+      <div class="frow g3">
+        <div style="grid-column:1/-1"><span class="flabel">Obra</span><select class="fi" id="aloc-obra"></select></div>
+        <div><span class="flabel">Data início</span><input type="date" class="fi" id="aloc-inicio"></div>
+        <div><span class="flabel">Data fim</span><input type="date" class="fi" id="aloc-fim"></div>
+        <div><span class="flabel">Incluir sábados?</span><select class="fi" id="aloc-sabado"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+      </div>
+      <div><span class="flabel" style="margin-bottom:8px;display:block">Colaboradores alocados</span>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="aloc-colabs"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-aloc')">Cancelar</button>
+      <button class="btn btn-p" onclick="salvarAloc()">Salvar alocação</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════ STATE ═══════════
+const S = {
+  colabs: ['Marcos Lima','Ana Souza','Rafael Costa','Dener','Fábio Almeida','Amilton','Carlos T.','Pedro H.','Julia M.','Ricardo F.','Beatriz L.','Thiago N.'],
+  areas: ['Vertical Energia','Vertical Indústria','Compras','Financeiro','Suporte','Comercial','Cliente','Gestor','Engenharia','Logística'],
+  clientes: ['CPFL Energia','Engie Brasil','Neoenergia','Celesc','AgroEnergia SC'],
+  tipos: ['CFTV / Segurança','Elétrico BT','Automação','BESS','Solar Fotovoltaico','Infraestrutura'],
+  obras: [
+    {
+      id:1, nome:'CFTV Subestação Caçador', cliente:'CPFL Energia', orcamento:'AMB-2025-0142',
+      respAmb:'Marcos Lima', fiscal:'Fábio Almeida', respCliente:'Carlos Mendes · (49) 99810-2233',
+      inicio:'2025-02-03', fim:'2025-05-15', endereco:'Rodovia SC-452, km 12 — Caçador, SC',
+      status:'Em andamento', tipo:'CFTV / Segurança', valor:280000,
+      horas:{internos:[{func:'Engenharia',prev:80,real:72},{func:'Técnico de campo',prev:240,real:195},{func:'Suporte',prev:80,real:60}],terceiros:[{nome:'Eletricista — Elétrica Sul',contratado:18000,pago:12000}]},
+      financeiro:{receita:[{nome:'Valor contrato',orc:280000,real:280000},{nome:'Aditivos aprovados',orc:0,real:18500}],mat:[{nome:'Câmeras e equipamentos',orc:60000,real:64200},{nome:'Cabos e infraestrutura',orc:20000,real:21800}],desp:[{nome:'Frete / mobilização',orc:8000,real:7200},{nome:'Hotel e alimentação',orc:12000,real:10800}]},
+      faturamento:[
+        {evento:'Assinatura do contrato',valor:56000,envio:'2025-02-10',statusEnvio:'Aprovado',faturamento:'2025-02-14',prazo:'2025-03-14',statusPgto:'Pago',dataPgto:'2025-03-12'},
+        {evento:'Medição intermediária 1',valor:72000,envio:'2025-03-05',statusEnvio:'Aprovado',faturamento:'2025-03-10',prazo:'2025-04-10',statusPgto:'À vencer',dataPgto:''},
+        {evento:'Medição intermediária 2',valor:62400,envio:'2025-03-28',statusEnvio:'Aguardando aprovação',faturamento:'',prazo:'',statusPgto:'Pendente',dataPgto:''},
+      ],
+      aditivos:[
+        {num:'ADT-001',desc:'Ampliação câmeras pátio norte (+4 PTZ)',valor:18500,solicitante:'Carlos Mendes (CPFL)',aprovador:'Marcos Lima (AMB)',status:'Aprovado'},
+        {num:'ADT-002',desc:'Cerca elétrica perimetral',valor:34000,solicitante:'Marcos Lima (AMB)',aprovador:'—',status:'Pendente com cliente'},
+      ],
+      pendencias:[
+        {area:'Compras',desc:'Aprovar compra suportes PTZ — R$ 4.800',resp:'Amilton',prazo:'2025-03-28',status:'Urgente'},
+        {area:'Engenharia',desc:'Enviar ART de instalação ao cliente',resp:'Ana Souza',prazo:'2025-04-05',status:'Em andamento'},
+        {area:'Cliente',desc:'Confirmar data de inspeção final',resp:'Carlos Mendes',prazo:'2025-04-10',status:'Sem retorno'},
+      ],
+      acoes:[
+        {area:'Suporte',resp:'Dener',atividade:'Configuração de câmeras e presets',prazo:'2025-04-02',status:'Previsto'},
+        {area:'Compras',resp:'Amilton',atividade:'Comprar dutos e eletrocalhas corredor leste',prazo:'2025-03-29',status:'Em andamento'},
+      ],
+      fiscalizacoes:[
+        {fiscal:'Fábio Almeida',data:'2025-03-08',tipo:'Mensal',nota:8,resumo:'Obra em bom andamento. Rack e câmeras internas concluídos. Pendência na vedação dos painéis de campo.',itens:[{texto:'Conexões elétricas e de fibra dos painéis',ok:true,obs:'Conforme'},{texto:'Vedação dos painéis de campo',ok:false,obs:'Painel P3 sem vedação'},{texto:'Lançamento de fibras pelas canaletas',ok:true,obs:''}],fotos:[{local:'Rack — casa de comando',desc:'Rack 42U instalado'},{local:'Painel P3 — pátio',desc:'Vedação ausente'}]},
+      ],
+      reunioes:[
+        {data:'2025-03-20',formato:'Remota (Teams)',resp:'Marcos Lima',evolucao:'68% físico, medição 2 enviada para aprovação.',decisoes:'Cliente aceita prazo 15/05.',acoes:'AMB envia ART até 05/04.'},
+      ]
+    },
+    {
+      id:2, nome:'Elétrico BT — Usina Lages', cliente:'Engie Brasil', orcamento:'AMB-2025-0098',
+      respAmb:'Ana Souza', fiscal:'Fábio Almeida', respCliente:'Roberto Alves · (49) 99722-1100',
+      inicio:'2025-01-20', fim:'2025-05-02', endereco:'Usina Lages — Lages, SC',
+      status:'Atrasada', tipo:'Elétrico BT', valor:145000,
+      horas:{internos:[{func:'Engenharia',prev:60,real:58},{func:'Técnico de campo',prev:160,real:140}],terceiros:[]},
+      financeiro:{receita:[{nome:'Valor contrato',orc:145000,real:145000}],mat:[{nome:'Materiais elétricos',orc:45000,real:48000}],desp:[{nome:'Mobilização',orc:8000,real:7500}]},
+      faturamento:[{evento:'Medição intermediária 1',valor:46400,envio:'2025-02-15',statusEnvio:'Aprovado',faturamento:'2025-02-20',prazo:'2025-03-20',statusPgto:'Pago',dataPgto:'2025-03-18'}],
+      aditivos:[],
+      pendencias:[{area:'Gestor',desc:'Definir novo cronograma com cliente',resp:'Ana Souza',prazo:'2025-03-30',status:'Urgente'}],
+      acoes:[{area:'Vertical Energia',resp:'Ana Souza',atividade:'Apresentar replanning ao cliente',prazo:'2025-04-01',status:'Previsto'}],
+      fiscalizacoes:[],
+      reunioes:[{data:'2025-03-22',formato:'Presencial na obra',resp:'Ana Souza',evolucao:'32% físico. Atraso na liberação de área.',decisoes:'Novo prazo negociado: 25/05.',acoes:'AMB apresenta cronograma atualizado.'}]
+    }
+  ],
+  alocacoes:[
+    {obra:'CFTV Subestação Caçador',inicio:'2026-04-10',fim:'2026-05-10',colabs:['Marcos Lima','Dener','Fábio Almeida','Pedro H.'],sabado:false},
+    {obra:'Elétrico BT — Usina Lages',inicio:'2026-04-01',fim:'2026-04-30',colabs:['Ana Souza','Ricardo F.','Beatriz L.','Thiago N.'],sabado:false},
+  ],
+  cfViewYear:2026, cfViewMonth:3,
+  currentObraId:null
+};
+
+// ═══════════ UTILS ═══════════
+const fmt = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+const fmtR = v => 'R$ '+Number(v||0).toLocaleString('pt-BR');
+const pctCol = p => p>100?'#A32D2D':p>=80?'#639922':p>=50?'#185FA5':'#EF9F27';
+const diffDays = d => d ? Math.round((new Date(d+'T12:00:00')-new Date())/(86400000)) : null;
+const statusBadgeHtml = (s) => {
+  const m={'Em andamento':'bb','No prazo':'bg','Atenção':'ba','Atrasada':'br','Encerrando':'bpu','Não iniciada':'bgr','Concluída':'bg','Urgente':'br','Previsto':'bgr','Aprovado':'bg','Pendente com cliente':'ba','Não dado retorno':'br','Pago':'bg','À vencer':'bb','Vencido':'br','Pendente':'bgr','Sem retorno':'ba'};
+  return `<span class="badge ${m[s]||'bgr'}">${s}</span>`;
+};
+const obraColors = ['#185FA5','#3B6D11','#854F0B','#534AB7','#993C1D','#0F6E56'];
+const obraBgs = ['#E6F1FB','#EAF3DE','#FAEEDA','#EEEDFE','#FAECE7','#E1F5EE'];
+
+function obraColor(nome){
+  const idx=S.obras.findIndex(o=>o.nome===nome)%obraColors.length;
+  return {cor:obraColors[idx]||'#888',bg:obraBgs[idx]||'#f5f5f3'};
+}
+
+// ═══════════ NAVIGATION ═══════════
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.topbar-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='cronofuturo') renderCronoFuturo();
+  if(id==='config') renderConfig();
+}
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// ═══════════ DASHBOARD ═══════════
+function renderDashboard(){
+  const obras = S.obras;
+  const ativas = obras.filter(o=>o.status!=='Concluída').length;
+  const atrasadas = obras.filter(o=>o.status==='Atrasada').length;
+  const totalFaturado = obras.reduce((a,o)=>a+o.faturamento.filter(f=>f.statusPgto==='Pago').reduce((s,f)=>s+f.valor,0),0);
+  const totalPend = obras.reduce((a,o)=>a+o.pendencias.length,0);
+  document.getElementById('dash-metrics').innerHTML=[
+    {label:'Obras ativas',value:ativas,sub:`${atrasadas} em atraso`,col:'#1a1a1a'},
+    {label:'Faturado (recebido)',value:fmtR(totalFaturado),sub:'Total consolidado',col:'#3B6D11'},
+    {label:'Pendências abertas',value:totalPend,sub:'Todas as obras',col:totalPend>10?'#A32D2D':'#854F0B'},
+    {label:'Em atraso',value:atrasadas,sub:`de ${ativas} ativas`,col:atrasadas?'#A32D2D':'#3B6D11'},
+  ].map(m=>`<div class="metric"><div class="metric-label">${m.label}</div><div class="metric-value" style="color:${m.col}">${m.value}</div><div class="metric-sub">${m.sub}</div></div>`).join('');
+
+  document.getElementById('obras-grid').innerHTML=obras.map(o=>{
+    const medido=o.faturamento.reduce((a,f)=>a+f.valor,0);
+    const pct=o.valor>0?Math.round(medido/o.valor*100):0;
+    const c=obraColor(o.nome);
+    return `<div class="obra-card" onclick="openObra(${o.id})">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:3px">${o.nome}</div>
+          <div style="font-size:12px;color:#888">${o.cliente} · ${o.tipo}</div>
+        </div>
+        ${statusBadgeHtml(o.status)}
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:10px;font-size:12px">
+        <span style="color:#888">Resp: <strong style="color:#1a1a1a">${o.respAmb}</strong></span>
+        <span style="color:#888">Prazo: <strong style="color:#1a1a1a">${fmt(o.fim)}</strong></span>
+      </div>
+      <div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:3px"><span>Faturamento</span><span style="color:${c.cor};font-weight:600">${pct}% — ${fmtR(medido)}</span></div>
+        <div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${c.cor}"></div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        ${o.pendencias.filter(p=>p.status==='Urgente').length?`<span class="badge br">${o.pendencias.filter(p=>p.status==='Urgente').length} urgente(s)</span>`:''}
+        <span class="badge bgr">${o.pendencias.length} pendência(s)</span>
+        <span class="badge bb">${o.fiscalizacoes.length} fiscalização(ões)</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════ NOVA OBRA ═══════════
+function openNovaObra(){
+  ['no-cliente','no-tipo','no-resp-amb','no-fiscal'].forEach(id=>{
+    const el=document.getElementById(id);
+    const opts={'no-cliente':S.clientes,'no-tipo':S.tipos,'no-resp-amb':S.colabs,'no-fiscal':S.colabs};
+    el.innerHTML=opts[id].map(o=>`<option>${o}</option>`).join('');
+  });
+  openModal('modal-nova-obra');
+}
+
+function salvarNovaObra(){
+  const nome=document.getElementById('no-nome').value.trim();
+  if(!nome){alert('Informe o nome da obra.');return;}
+  S.obras.push({
+    id:Date.now(), nome, cliente:document.getElementById('no-cliente').value,
+    orcamento:document.getElementById('no-orcamento').value,
+    respAmb:document.getElementById('no-resp-amb').value,
+    fiscal:document.getElementById('no-fiscal').value,
+    respCliente:document.getElementById('no-resp-cliente').value,
+    inicio:document.getElementById('no-inicio').value,
+    fim:document.getElementById('no-fim').value,
+    endereco:document.getElementById('no-endereco').value,
+    status:document.getElementById('no-status').value,
+    tipo:document.getElementById('no-tipo').value,
+    valor:+document.getElementById('no-valor').value||0,
+    horas:{internos:[],terceiros:[]},
+    financeiro:{receita:[],mat:[],desp:[]},
+    faturamento:[],aditivos:[],pendencias:[],acoes:[],fiscalizacoes:[],reunioes:[]
+  });
+  closeModal('modal-nova-obra');
+  renderDashboard();
+}
+
+// ═══════════ OBRA DRAWER ═══════════
+function openObra(id){
+  S.currentObraId=id;
+  const o=S.obras.find(x=>x.id===id);
+  document.getElementById('drawer-title').textContent=o.nome;
+  document.getElementById('drawer-sub').textContent=`${o.cliente} · ${o.orcamento} · Resp: ${o.respAmb}`;
+  document.getElementById('drawer-badge').innerHTML=statusBadgeHtml(o.status);
+  document.getElementById('obra-drawer').classList.add('open');
+  showDsectionById('identificacao');
+}
+
+function closeDrawer(e){ if(e.target===document.getElementById('obra-drawer')) closeDrawerDirect(); }
+function closeDrawerDirect(){ document.getElementById('obra-drawer').classList.remove('open'); }
+
+function showDsection(id, btn){
+  showDsectionById(id);
+  document.querySelectorAll('.dtab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+
+function showDsectionById(id){
+  const o=S.obras.find(x=>x.id===S.currentObraId);
+  if(!o) return;
+  const content=document.getElementById('drawer-content');
+  const renderers={
+    identificacao:()=>renderIdentificacao(o),
+    cronograma:()=>renderCronogramaObra(o),
+    horas:()=>renderHoras(o),
+    financeiro:()=>renderFinanceiro(o),
+    faturamento:()=>renderFaturamento(o),
+    aditivos:()=>renderAditivos(o),
+    pendencias:()=>renderPendencias(o),
+    acoes:()=>renderAcoes(o),
+    fiscalizacao:()=>renderFiscalizacao(o),
+    reunioes:()=>renderReunioes(o),
+  };
+  content.innerHTML=renderers[id]?renderers[id]():'';
+}
+
+// ═══════════ IDENTIFICAÇÃO ═══════════
+function renderIdentificacao(o){
+  return `<div class="card">
+    <div class="card-title">Identificação da obra</div>
+    <div class="g2" style="display:grid;gap:12px">
+      ${[['Nome da obra',o.nome],['Nº orçamento',o.orcamento],['Cliente',o.cliente],['Tipo de projeto',o.tipo],['Responsável AMB',o.respAmb],['Fiscal da obra',o.fiscal],['Responsável cliente',o.respCliente],['Status',o.status]].map(([l,v])=>`<div><div style="font-size:11px;color:#888;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px">${l}</div><div style="font-size:13px;font-weight:600">${v||'—'}</div></div>`).join('')}
+      <div style="grid-column:1/-1"><div style="font-size:11px;color:#888;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Endereço</div><div style="font-size:13px;font-weight:600">${o.endereco||'—'}</div></div>
+      <div><div style="font-size:11px;color:#888;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Data de início</div><div style="font-size:13px;font-weight:600">${fmt(o.inicio)}</div></div>
+      <div><div style="font-size:11px;color:#888;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Finalização prevista</div><div style="font-size:13px;font-weight:600">${fmt(o.fim)}</div></div>
+    </div>
+  </div>`;
+}
+
+// ═══════════ CRONOGRAMA ═══════════
+function renderCronogramaObra(o){
+  return `<div style="font-size:12px;color:#888;margin-bottom:12px">Clique em cada etapa para expandir e registrar o avanço.</div>
+  ${[
+    {n:1,nome:'Elaboração de projeto executivo',body:`<div style="font-size:12px;color:#888;margin-bottom:8px">Adicione quantos projetos forem necessários para esta obra.</div><table><thead><tr><th>Nome do projeto</th><th>Status</th><th>% conclusão</th><th>Previsão</th></tr></thead><tbody><tr><td>Projeto Executivo — Subestação Caçador</td><td>${statusBadgeHtml('Aprovado')}</td><td><div style="display:flex;align-items:center;gap:6px"><div class="pct-bar" style="width:80px"><div class="pct-fill" style="width:100%;background:#639922"></div></div><span style="font-size:11px;color:#888">100%</span></div></td><td style="font-size:12px;color:#888">—</td></tr></tbody></table><button class="btn btn-sm" style="margin-top:8px">+ Adicionar projeto</button>`},
+    {n:2,nome:'Compra de materiais',body:renderEtapaCompra()},
+    {n:3,nome:'Separação de materiais',body:`<div style="display:flex;gap:8px;flex-wrap:wrap">${['Não iniciada','Em andamento','Finalizada'].map(s=>`<button class="btn btn-sm ${s==='Finalizada'?'btn-p':''}">${s}</button>`).join('')}</div>`},
+    {n:4,nome:'Montagem de painéis e racks',body:renderEtapaMontagem()},
+    {n:5,nome:'Configuração e testes',body:`<div style="display:flex;gap:8px;flex-wrap:wrap">${['Não iniciado','Em andamento','Finalizado'].map(s=>`<button class="btn btn-sm ${s==='Em andamento'?'btn-p':''}">${s}</button>`).join('')}</div>`},
+    {n:6,nome:'Atividades em campo',body:renderEtapaCampo()},
+  ].map(m=>`<div class="macro-block">
+    <div class="macro-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.toggle').classList.toggle('open')">
+      <span class="macro-num">${m.n}</span>
+      <span class="macro-name">${m.nome}</span>
+      <span class="toggle">▶</span>
+    </div>
+    <div class="macro-body"><div style="padding:14px">${m.body}</div></div>
+  </div>`).join('')}`;
+}
+
+function renderEtapaCompra(){
+  return ['a. Lista em revisão pela engenharia','b. Lista parcial enviada ao compras','c. Lista finalizada enviada ao compras','d. Compras em andamento','e. Compras finalizadas'].map((nome,i)=>`
+    <div class="etapa-row">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <span style="font-size:12px;flex:1">${nome}</span>
+        ${i<3?statusBadgeHtml('Aprovado'):i===3?statusBadgeHtml('Em andamento'):statusBadgeHtml('Pendente')}
+      </div>
+      <div style="display:none;padding:10px;background:#fafaf8;border-radius:8px;margin-bottom:8px">
+        <div class="frow g3">
+          <div><span class="flabel">Responsável</span><input type="text" class="fi" value="${['Ana Souza','Amilton','Ana Souza','Amilton','Amilton'][i]}"></div>
+          <div><span class="flabel">Prazo</span><input type="date" class="fi"></div>
+          <div><span class="flabel">% concluído</span><div style="display:flex;align-items:center;gap:6px"><input type="range" min="0" max="100" step="1" value="${[100,100,100,70,0][i]}" style="flex:1" oninput="this.nextElementSibling.textContent=this.value+'%'"><span style="font-size:11px;color:#888;min-width:32px">${[100,100,100,70,0][i]}%</span></div></div>
+        </div>
+        <div><span class="flabel">Observações</span><textarea class="fi" rows="2" placeholder="Registre observações, pendências ou cotações..."></textarea></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderEtapaMontagem(){
+  const dados=[{tipo:'Rack 42U',total:2,mont:2,pre:0},{tipo:'Painel de campo tipo A',total:8,mont:5,pre:2},{tipo:'Painel de campo tipo B',total:4,mont:1,pre:1}];
+  const rows=dados.map(r=>{
+    const nao=r.total-r.mont-r.pre;
+    const pct=Math.round(r.mont/r.total*100);
+    return `<tr><td>${r.tipo}</td><td style="text-align:center">${r.total}</td><td style="text-align:center;color:#3B6D11;font-weight:600">${r.mont}</td><td style="text-align:center;color:#854F0B;font-weight:600">${r.pre}</td><td style="text-align:center;color:#A32D2D;font-weight:600">${nao}</td><td><div style="display:flex;align-items:center;gap:6px"><div class="pct-bar" style="width:70px"><div class="pct-fill" style="width:${pct}%;background:${pctCol(pct)}"></div></div><span style="font-size:11px;color:#888">${pct}%</span></div></td></tr>`;
+  }).join('');
+  return `<table><thead><tr><th>Tipo / lote</th><th>Total</th><th style="color:#3B6D11">Montados</th><th style="color:#854F0B">Pré-mont.</th><th style="color:#A32D2D">Não inic.</th><th>Progresso</th></tr></thead><tbody>${rows}</tbody></table><button class="btn btn-sm" style="margin-top:8px">+ Adicionar lote</button>`;
+}
+
+function renderEtapaCampo(){
+  const locs=[
+    {loc:'Casa de Comando',items:[{n:'Instalação do Rack',un:'un',prev:2,real:2},{n:'Alimentação elétrica do Rack',un:'un',prev:2,real:2},{n:'Infraestrutura de dutos e eletrocalhas',un:'m',prev:120,real:110},{n:'Lançamento de Cabos UTP/FTP',un:'m',prev:800,real:650},{n:'Instalação de câmeras fixas',un:'un',prev:12,real:12},{n:'Fusões de Fibra em DIO',un:'fusão',prev:24,real:24},{n:'Conexões de rede',un:'un',prev:18,real:14},{n:'Validação e testes',un:'un',prev:1,real:0}]},
+    {loc:'Pátio da Subestação',items:[{n:'Lançamento de Fibra pelas Canaletas',un:'m',prev:600,real:400},{n:'Lançamento de Cabos elétricos',un:'m',prev:500,real:320},{n:'Abertura de Valas e Dutos PEAD',un:'m',prev:200,real:180},{n:'Instalação de caixas de passagem',un:'un',prev:16,real:14},{n:'Instalação de Postes',un:'un',prev:8,real:6},{n:'Instalação de Painéis em pórtico',un:'un',prev:8,real:4},{n:'Instalação de câmeras pórtico/poste',un:'un',prev:16,real:8},{n:'Fechamento de valas',un:'m',prev:200,real:0}]},
+    {loc:'TAC e Comissionamento',items:[{n:'Configuração e testes de funcionamento',un:'un',prev:1,real:0},{n:'Presets das câmeras de pátio',un:'un',prev:16,real:0},{n:'Identificação de equipamentos',un:'un',prev:1,real:0},{n:'Configuração para usuários do cliente',un:'un',prev:1,real:0},{n:'Assinatura do Comissionamento',un:'un',prev:1,real:0},{n:'Entrega da Documentação / RFO',un:'un',prev:1,real:0}]}
+  ];
+  return locs.map(loc=>{
+    const totP=loc.items.reduce((a,i)=>a+i.prev,0);
+    const totR=loc.items.reduce((a,i)=>a+Math.min(i.real,i.prev),0);
+    const locPct=totP>0?Math.round(totR/totP*100):0;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">${loc.loc}</span>
+        <span class="badge ${locPct>=100?'bg':locPct>0?'ba':'bgr'}">${locPct}%</span>
+      </div>
+      <table><thead><tr><th>Atividade</th><th>Un.</th><th>Previsto</th><th>Realizado</th><th>% auto</th><th>Status</th></tr></thead>
+      <tbody>${loc.items.map(it=>{
+        const p=it.prev>0?Math.round(Math.min(it.real,it.prev)/it.prev*100):0;
+        const st=p>=100?'Concluído':p>0?'Em andamento':'Não iniciado';
+        const sc=p>=100?'bg':p>0?'ba':'bgr';
+        return `<tr><td>${it.n}</td><td style="color:#aaa">${it.un}</td><td>${it.prev}</td><td>${it.real}</td><td><div style="display:flex;align-items:center;gap:4px"><div class="pct-bar" style="width:60px"><div class="pct-fill" style="width:${p}%;background:${pctCol(p)}"></div></div><span style="font-size:10px;color:#888">${p}%</span></div></td><td><span class="badge ${sc}">${st}</span></td></tr>`;
+      }).join('')}</tbody></table></div>`;
+  }).join('<hr style="border:none;border-top:1px solid #f0f0ee;margin:10px 0">');
+}
+
+// ═══════════ HORAS ═══════════
+function renderHoras(o){
+  const internos=o.horas.internos||[];
+  const terceiros=o.horas.terceiros||[];
+  const totP=internos.reduce((a,r)=>a+r.prev,0);
+  const totR=internos.reduce((a,r)=>a+r.real,0);
+  const totPct=totP>0?Math.round(totR/totP*100):0;
+  return `<div class="card">
+    <div class="card-title">Equipe interna — controle de horas</div>
+    <table><thead><tr><th>Função / colaborador</th><th>Horas previstas</th><th>Horas apontadas</th><th>Saldo</th><th>Consumo</th></tr></thead>
+    <tbody>${internos.map(r=>{
+      const pct=r.prev>0?Math.round(r.real/r.prev*100):0;
+      const saldo=r.prev-r.real;
+      return `<tr><td><select class="fi" style="width:180px">${S.colabs.map(c=>`<option ${c===r.func?'selected':''}>${c}</option>`).join('')}</select></td><td>${r.prev}h</td><td style="color:${r.real>r.prev?'#A32D2D':'inherit'}">${r.real}h</td><td style="color:${saldo<0?'#A32D2D':'#3B6D11'};font-weight:600">${saldo<0?'':'+'}${saldo}h</td><td><div style="display:flex;align-items:center;gap:6px"><div class="pct-bar" style="width:80px"><div class="pct-fill" style="width:${Math.min(pct,100)}%;background:${pctCol(pct)}"></div></div><span style="font-size:11px;color:${r.real>r.prev?'#A32D2D':'#888'}">${pct}%${r.real>r.prev?' !':''}</span></div></td></tr>`;
+    }).join('')}
+    <tr style="background:#fafaf8"><td><strong>Total</strong></td><td><strong>${totP}h</strong></td><td><strong style="color:${totR>totP?'#A32D2D':'inherit'}">${totR}h</strong></td><td style="color:${totP-totR<0?'#A32D2D':'#3B6D11'};font-weight:600">${totP-totR<0?'':'+'}${totP-totR}h</td><td><div style="display:flex;align-items:center;gap:6px"><div class="pct-bar" style="width:80px"><div class="pct-fill" style="width:${Math.min(totPct,100)}%;background:${pctCol(totPct)}"></div></div><span style="font-size:11px;color:#888">${totPct}%</span></div></td></tr>
+    </tbody></table>
+    <button class="btn btn-sm" style="margin-top:10px">+ Adicionar função</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Terceiros — controle de valor</div>
+    <table><thead><tr><th>Empresa / serviço</th><th>Valor contratado</th><th>Valor pago</th><th>Saldo</th></tr></thead>
+    <tbody>${terceiros.map(r=>{
+      const saldo=r.contratado-r.pago;
+      return `<tr><td>${r.nome}</td><td>${fmtR(r.contratado)}</td><td>${fmtR(r.pago)}</td><td style="color:${saldo<0?'#A32D2D':'#3B6D11'};font-weight:600">${saldo<0?'-':''}${fmtR(Math.abs(saldo))}</td></tr>`;
+    }).join('')}
+    ${!terceiros.length?`<tr><td colspan="4" style="color:#aaa;text-align:center;padding:16px">Nenhum terceiro cadastrado</td></tr>`:''}</tbody></table>
+    <button class="btn btn-sm" style="margin-top:10px">+ Adicionar terceiro</button>
+  </div>`;
+}
+
+// ═══════════ FINANCEIRO ═══════════
+function renderFinanceiro(o){
+  const fin=o.financeiro;
+  const totRec=fin.receita.reduce((a,r)=>a+r.real,0);
+  const totCusto=[...fin.mat,...(fin.mdo||[]),...fin.desp].reduce((a,r)=>a+r.real,0);
+  const totCustoOrc=[...fin.mat,...(fin.mdo||[]),...fin.desp].reduce((a,r)=>a+r.orc,0);
+  const marg=totRec-totCusto;
+  const margPct=totRec>0?Math.round(marg/totRec*100):0;
+
+  const metrics=[
+    {label:'Receita realizada',value:fmtR(totRec),col:'#185FA5'},
+    {label:'Custo total realizado',value:fmtR(totCusto),col:totCusto>totCustoOrc?'#A32D2D':'#3B6D11'},
+    {label:'Margem realizada',value:fmtR(marg),col:marg>0?'#3B6D11':'#A32D2D'},
+    {label:'Margem %',value:`${margPct}%`,col:margPct>25?'#3B6D11':margPct>10?'#854F0B':'#A32D2D'},
+  ];
+
+  const renderCat=(rows,title)=>{
+    const totO=rows.reduce((a,r)=>a+r.orc,0);const totR=rows.reduce((a,r)=>a+r.real,0);
+    return `<div class="card"><div class="card-title">${title}</div><table><thead><tr><th>Item</th><th>Orçado</th><th>Realizado</th><th>Var.</th></tr></thead><tbody>
+      ${rows.map(r=>{const v=r.real-r.orc;return `<tr><td>${r.nome}</td><td>${fmtR(r.orc)}</td><td>${fmtR(r.real)}</td><td style="color:${v>0?'#A32D2D':'#3B6D11'};font-weight:600">${v>0?'+':''}${fmtR(v)}</td></tr>`;}).join('')}
+      <tr style="background:#fafaf8"><td><strong>Total</strong></td><td><strong>${fmtR(totO)}</strong></td><td><strong>${fmtR(totR)}</strong></td><td style="color:${totR>totO?'#A32D2D':'#3B6D11'};font-weight:600">${totR>totO?'+':''}${fmtR(totR-totO)}</td></tr>
+    </tbody></table><button class="btn btn-sm" style="margin-top:8px">+ Linha</button></div>`;
+  };
+
+  return `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+    ${metrics.map(m=>`<div class="metric"><div class="metric-label">${m.label}</div><div class="metric-value" style="color:${m.col};font-size:18px">${m.value}</div></div>`).join('')}
+  </div>
+  <div class="g2" style="display:grid;gap:12px">
+    ${renderCat(fin.receita,'Receita')}
+    ${renderCat(fin.mat,'Custo de material')}
+    <div class="card"><div class="card-title">Mão de obra interna — horas</div><table><thead><tr><th>Função</th><th>Horas prev.</th><th>Horas apon.</th><th>Consumo</th></tr></thead><tbody>
+      ${o.horas.internos.map(r=>{const pct=r.prev>0?Math.round(r.real/r.prev*100):0;return `<tr><td>${r.func}</td><td>${r.prev}h</td><td style="color:${r.real>r.prev?'#A32D2D':'inherit'}">${r.real}h</td><td><div style="display:flex;align-items:center;gap:5px"><div class="pct-bar" style="width:60px"><div class="pct-fill" style="width:${Math.min(pct,100)}%;background:${pctCol(pct)}"></div></div><span style="font-size:11px;color:#888">${pct}%</span></div></td></tr>`;}).join('')}
+    </tbody></table></div>
+    ${renderCat(fin.desp,'Despesas (mobilização, viagem, etc)')}
+  </div>`;
+}
+
+// ═══════════ FATURAMENTO ═══════════
+function renderFaturamento(o){
+  const today=new Date();
+  const vencidas=o.faturamento.filter(f=>f.prazo&&diffDays(f.prazo)<0&&f.statusPgto!=='Pago');
+  const pago=o.faturamento.filter(f=>f.statusPgto==='Pago').reduce((a,f)=>a+f.valor,0);
+  const total=o.faturamento.reduce((a,f)=>a+f.valor,0);
+  const envBadge=s=>{const m={'Aprovado':'bg','Aguardando aprovação':'ba','Aguardando retorno':'bb','Não enviado':'bgr','Pendente com AMB':'ba'};return `<span class="badge ${m[s]||'bgr'}">${s}</span>`;};
+  const pgtBadge=(s,pr)=>{if(s==='Pago')return `<span class="badge bg">Pago</span>`;if(pr&&diffDays(pr)<0)return `<span class="badge br">Vencido</span>`;if(s==='À vencer'&&pr&&diffDays(pr)<=7)return `<span class="badge ba">Vence em ${diffDays(pr)}d</span>`;if(s==='À vencer')return `<span class="badge bb">À vencer</span>`;return `<span class="badge bgr">${s}</span>`;};
+  return `${vencidas.map(f=>`<div class="alert-bar"><span style="color:#E24B4A;font-weight:700">!</span><span style="color:#A32D2D;font-weight:600">${f.evento}</span><span style="color:#A32D2D">— vencida há ${Math.abs(diffDays(f.prazo))} dias · ${fmtR(f.valor)}</span></div>`).join('')}
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="font-size:12px;color:#888">Total: <strong>${fmtR(total)}</strong> · Recebido: <strong style="color:#3B6D11">${fmtR(pago)}</strong> · A receber: <strong style="color:#185FA5">${fmtR(total-pago)}</strong></div>
+    <button class="btn btn-p btn-sm">+ Evento</button>
+  </div>
+  <div class="card" style="overflow-x:auto"><table style="min-width:750px">
+    <thead><tr><th>Evento</th><th>Valor</th><th>Envio</th><th>Status envio</th><th>Faturamento</th><th>Prazo pgto</th><th>Status pgto</th><th>Pago em</th></tr></thead>
+    <tbody>${o.faturamento.map(f=>`<tr style="${f.prazo&&diffDays(f.prazo)<0&&f.statusPgto!=='Pago'?'background:#fff8f8':''}">
+      <td style="font-weight:600">${f.evento}</td><td>${fmtR(f.valor)}</td><td>${fmt(f.envio)}</td><td>${envBadge(f.statusEnvio)}</td><td>${fmt(f.faturamento)}</td><td>${fmt(f.prazo)}</td><td>${pgtBadge(f.statusPgto,f.prazo)}</td>
+      <td>${f.dataPgto?`<span style="color:#3B6D11;font-weight:600">${fmt(f.dataPgto)}</span>`:'<span style="color:#ccc">—</span>'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ═══════════ ADITIVOS ═══════════
+function renderAditivos(o){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="font-size:12px;color:#888">${o.aditivos.length} aditivo(s) registrado(s)</div>
+    <button class="btn btn-p btn-sm">+ Novo aditivo</button>
+  </div>
+  <div class="card" style="overflow-x:auto"><table style="min-width:650px">
+    <thead><tr><th>Nº proposta</th><th>Descrição</th><th>Valor</th><th>Solicitante</th><th>Aprovador</th><th>Status</th></tr></thead>
+    <tbody>${o.aditivos.map(a=>`<tr><td style="font-weight:600">${a.num}</td><td>${a.desc}</td><td style="font-weight:600">${fmtR(a.valor)}</td><td>${a.solicitante}</td><td>${a.aprovador}</td><td>${statusBadgeHtml(a.status)}</td></tr>`).join('')}
+    ${!o.aditivos.length?`<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px">Nenhum aditivo registrado</td></tr>`:''}</tbody>
+  </table></div>`;
+}
+
+// ═══════════ PENDÊNCIAS ═══════════
+function renderPendencias(o){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="font-size:12px;color:#888">${o.pendencias.filter(p=>p.status==='Urgente').length} urgente(s) · ${o.pendencias.length} total</div>
+    <button class="btn btn-p btn-sm">+ Nova pendência</button>
+  </div>
+  <div class="card" style="overflow-x:auto"><table>
+    <thead><tr><th>Área</th><th>Descrição</th><th>Responsável</th><th>Prazo</th><th>Status</th></tr></thead>
+    <tbody>${o.pendencias.map(p=>{
+      const venc=p.prazo&&diffDays(p.prazo)<0;
+      return `<tr style="${venc?'background:#fff8f8':''}"><td><span class="badge bb">${p.area}</span></td><td>${p.desc}</td><td>${p.resp}</td><td style="color:${venc?'#A32D2D':'inherit'};font-weight:${venc?'600':'400'}">${fmt(p.prazo)}</td><td>${statusBadgeHtml(p.status)}</td></tr>`;
+    }).join('')}
+    ${!o.pendencias.length?`<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">Nenhuma pendência registrada</td></tr>`:''}</tbody>
+  </table></div>`;
+}
+
+// ═══════════ AÇÕES ═══════════
+function renderAcoes(o){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="font-size:12px;color:#888">Ações previstas para os próximos 15 dias</div>
+    <button class="btn btn-p btn-sm">+ Nova ação</button>
+  </div>
+  <div class="card" style="overflow-x:auto"><table>
+    <thead><tr><th>Área</th><th>Responsável</th><th>Atividade</th><th>Prazo previsto</th><th>Status</th></tr></thead>
+    <tbody>${o.acoes.map(a=>`<tr><td><span class="badge bb">${a.area}</span></td><td>${a.resp}</td><td>${a.atividade}</td><td>${fmt(a.prazo)}</td><td>${statusBadgeHtml(a.status)}</td></tr>`).join('')}
+    ${!o.acoes.length?`<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">Nenhuma ação registrada</td></tr>`:''}</tbody>
+  </table></div>`;
+}
+
+// ═══════════ FISCALIZAÇÃO ═══════════
+function renderFiscalizacao(o){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:12px;color:#888">${o.fiscalizacoes.length} fiscalização(ões) registrada(s)</div>
+    <button class="btn btn-p btn-sm">+ Nova fiscalização</button>
+  </div>
+  ${o.fiscalizacoes.map((f,fi)=>{
+    const notaCol=f.nota>=8?'#3B6D11':f.nota>=6?'#854F0B':'#A32D2D';
+    const pend=f.itens.filter(i=>!i.ok).length;
+    return `<div class="macro-block">
+      <div class="macro-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.toggle').classList.toggle('open')">
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Fiscalização — ${fmt(f.data)}</div><div style="font-size:11px;color:#888;margin-top:2px">${f.fiscal} · ${f.tipo}</div></div>
+        <span class="badge ${pend?'ba':'bg'}">${pend} pendência(s)</span>
+        <div style="text-align:center;min-width:44px"><div style="font-size:17px;font-weight:700;color:${notaCol}">${f.nota}/10</div><div style="font-size:10px;color:#aaa">qualidade</div></div>
+        <span class="toggle">▶</span>
+      </div>
+      <div class="macro-body"><div style="padding:14px">
+        <div style="font-size:12px;color:#666;background:#fafaf8;padding:8px 12px;border-radius:8px;margin-bottom:12px">${f.resumo}</div>
+        <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Itens obrigatórios</div>
+        ${f.itens.map(it=>`<div class="check-row"><span style="font-size:16px;color:${it.ok?'#639922':'#E24B4A'}">${it.ok?'✓':'✗'}</span><div><div style="font-size:12px;font-weight:500">${it.texto}</div>${it.obs?`<div style="font-size:11px;color:#aaa">${it.obs}</div>`:''}</div></div>`).join('')}
+        ${f.fotos&&f.fotos.length?`<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 8px">Fotos (${f.fotos.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">${f.fotos.map(foto=>`<div style="border:1px solid #eee;border-radius:8px;padding:8px 10px;font-size:11px"><div style="font-weight:600;margin-bottom:2px">${foto.local}</div><div style="color:#aaa">${foto.desc}</div></div>`).join('')}</div>`:''}</div></div>
+    </div>`;
+  }).join('')}
+  ${!o.fiscalizacoes.length?`<div class="card" style="text-align:center;color:#aaa;padding:24px">Nenhuma fiscalização registrada</div>`:''}`;
+}
+
+// ═══════════ REUNIÕES ═══════════
+function renderReunioes(o){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:12px;color:#888">${o.reunioes.length} reunião(ões) registrada(s)</div>
+    <button class="btn btn-p btn-sm">+ Registrar reunião</button>
+  </div>
+  ${o.reunioes.map(r=>`<div class="card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+      <div><div style="font-size:14px;font-weight:700">Reunião — ${fmt(r.data)}</div><div style="font-size:12px;color:#888;margin-top:2px">${r.resp} · ${r.formato}</div></div>
+      <span class="badge bg">Realizada</span>
+    </div>
+    ${[['Evolução apresentada',r.evolucao],['Decisões tomadas',r.decisoes],['Próximas ações',r.acoes]].map(([l,v])=>`<div style="margin-bottom:8px"><span style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.3px">${l}</span><div style="font-size:12px;margin-top:3px">${v||'—'}</div></div>`).join('')}
+  </div>`).join('')}
+  ${!o.reunioes.length?`<div class="card" style="text-align:center;color:#aaa;padding:24px">Nenhuma reunião registrada</div>`:''}`;
+}
+
+// ═══════════ CRONOGRAMA FUTURO ═══════════
+function renderCronoFuturo(){
+  renderCrono();
+}
+
+function navMes(dir){
+  S.cfViewMonth+=dir;
+  if(S.cfViewMonth>11){S.cfViewMonth=0;S.cfViewYear++;}
+  if(S.cfViewMonth<0){S.cfViewMonth=11;S.cfViewYear--;}
+  renderCrono();
+}
+
+function renderCrono(){
+  const mesNomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('cf-mes-label').textContent=mesNomes[S.cfViewMonth]+' '+S.cfViewYear;
+
+  const filObra=document.getElementById('cf-fil-obra').value;
+  const filColab=document.getElementById('cf-fil-colab').value;
+
+  // populate filters
+  const obraSel=document.getElementById('cf-fil-obra');
+  const curObra=obraSel.value;
+  obraSel.innerHTML='<option value="">Todas as obras</option>'+S.obras.map(o=>`<option ${o.nome===curObra?'selected':''}>${o.nome}</option>`).join('');
+
+  const colabSel=document.getElementById('cf-fil-colab');
+  const curColab=colabSel.value;
+  colabSel.innerHTML='<option value="">Todos os colaboradores</option>'+S.colabs.map(c=>`<option ${c===curColab?'selected':''}>${c}</option>`).join('');
+
+  const dias=new Date(S.cfViewYear,S.cfViewMonth+1,0).getDate();
+  const dNames=['D','S','T','Q','Q','S','S'];
+  const today=new Date();
+  const isToday=(d)=>today.getFullYear()===S.cfViewYear&&today.getMonth()===S.cfViewMonth&&today.getDate()===d;
+  const isWE=(d)=>{const dw=new Date(S.cfViewYear,S.cfViewMonth,d).getDay();return dw===0||dw===6;};
+  const ds=(d)=>`${S.cfViewYear}-${String(S.cfViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+  const getAllocs=(colab,dateStr)=>S.alocacoes.filter(a=>{
+    if(filObra&&a.obra!==filObra)return false;
+    if(!a.colabs.includes(colab))return false;
+    if(dateStr<a.inicio||dateStr>a.fim)return false;
+    const dw=new Date(dateStr+'T12:00:00').getDay();
+    if(dw===0)return false;
+    if(dw===6&&!a.sabado)return false;
+    return true;
+  });
+
+  let thead='<tr><th class="name-col" style="position:sticky;left:0;z-index:2">Colaborador</th>';
+  for(let d=1;d<=dias;d++){
+    const dw=new Date(S.cfViewYear,S.cfViewMonth,d).getDay();
+    const tod=isToday(d);
+    thead+=`<th style="${isWE(d)?'color:#ccc':''}${tod?';background:#B5D4F4;color:#0C447C':''}${isWE(d)?';background:#f8f8f6':''}">${d}<br><span style="font-weight:400;font-size:9px">${dNames[dw]}</span></th>`;
+  }
+  thead+='</tr>';
+
+  const colabs=filColab?[filColab]:S.colabs;
+  let tbody='';
+  colabs.forEach(colab=>{
+    let hasAny=false;
+    let row=`<tr><td class="name-col" style="position:sticky;left:0;z-index:1;font-weight:600">${colab}</td>`;
+    for(let d=1;d<=dias;d++){
+      const dateStr=ds(d);
+      const allocs=getAllocs(colab,dateStr);
+      if(allocs.length)hasAny=true;
+      const we=isWE(d);const tod=isToday(d);
+      row+=`<td style="${we?'background:#f8f8f6':''}${tod?';background:#e8f0fb':''}">`;
+      allocs.forEach(a=>{
+        const c=obraColor(a.obra);
+        const abrev=a.obra.split(/[\s—]+/).slice(0,2).join(' ').substring(0,10);
+        row+=`<div class="alloc-pill" style="background:${c.bg};color:${c.cor}" title="${a.obra}\nClique para remover ${colab}" onclick="removeAloc('${a.obra}','${colab}')">${abrev}</div>`;
+      });
+      row+='</td>';
+    }
+    row+='</tr>';
+    if(!filColab||hasAny)tbody+=row;
+  });
+
+  document.getElementById('cf-cal').innerHTML=`<thead>${thead}</thead><tbody>${tbody}</tbody>`;
+
+  document.getElementById('cf-legenda').innerHTML=S.obras.map(o=>{
+    const c=obraColor(o.nome);
+    return `<div style="display:flex;align-items:center;gap:5px;font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c.bg};border:1px solid ${c.cor}"></span><span style="color:${c.cor};font-weight:600">${o.nome}</span></div>`;
+  }).join('');
+}
+
+function openModalAloc(){
+  document.getElementById('aloc-obra').innerHTML=S.obras.map(o=>`<option>${o.nome}</option>`).join('');
+  document.getElementById('aloc-colabs').innerHTML=S.colabs.map(c=>`<label class="colab-check-label"><input type="checkbox" value="${c}"><span>${c}</span></label>`).join('');
+  openModal('modal-aloc');
+}
+
+function salvarAloc(){
+  const obra=document.getElementById('aloc-obra').value;
+  const inicio=document.getElementById('aloc-inicio').value;
+  const fim=document.getElementById('aloc-fim').value;
+  const sabado=document.getElementById('aloc-sabado').value==='sim';
+  const colabs=[...document.querySelectorAll('#aloc-colabs input:checked')].map(i=>i.value);
+  if(!colabs.length){alert('Selecione ao menos um colaborador.');return;}
+  if(!inicio||!fim){alert('Informe as datas de início e fim.');return;}
+  S.alocacoes.push({obra,inicio,fim,colabs,sabado});
+  closeModal('modal-aloc');
+  renderCrono();
+}
+
+function removeAloc(obra,colab){
+  if(!confirm(`Remover ${colab} da obra "${obra}"?`))return;
+  S.alocacoes=S.alocacoes.map(a=>{
+    if(a.obra===obra)a.colabs=a.colabs.filter(c=>c!==colab);
+    return a;
+  }).filter(a=>a.colabs.length>0);
+  renderCrono();
+}
+
+// ═══════════ CONFIG ═══════════
+function renderConfig(){
+  const renderList=(items,containerId,removeFn)=>{
+    document.getElementById(containerId).innerHTML=items.map((item,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f3"><span style="font-size:13px">${item}</span><button class="btn btn-sm btn-danger" onclick="${removeFn}(${i})">×</button></div>`).join('');
+  };
+  renderList(S.colabs,'cfg-colabs-list','removeColab');
+  renderList(S.areas,'cfg-areas-list','removeArea');
+  renderList(S.clientes,'cfg-clientes-list','removeCliente');
+  renderList(S.tipos,'cfg-tipos-list','removeTipo');
+}
+
+function addColab(){ const v=document.getElementById('cfg-colab-input').value.trim();if(!v)return;S.colabs.push(v);document.getElementById('cfg-colab-input').value='';renderConfig(); }
+function removeColab(i){ S.colabs.splice(i,1);renderConfig(); }
+function addArea(){ const v=document.getElementById('cfg-area-input').value.trim();if(!v)return;S.areas.push(v);document.getElementById('cfg-area-input').value='';renderConfig(); }
+function removeArea(i){ S.areas.splice(i,1);renderConfig(); }
+function addCliente(){ const v=document.getElementById('cfg-cliente-input').value.trim();if(!v)return;S.clientes.push(v);document.getElementById('cfg-cliente-input').value='';renderConfig(); }
+function removeCliente(i){ S.clientes.splice(i,1);renderConfig(); }
+function addTipo(){ const v=document.getElementById('cfg-tipo-input').value.trim();if(!v)return;S.tipos.push(v);document.getElementById('cfg-tipo-input').value='';renderConfig(); }
+function removeTipo(i){ S.tipos.splice(i,1);renderConfig(); }
+
+// ═══════════ INIT ═══════════
+renderDashboard();
+</script>
+</body>
+</html>
